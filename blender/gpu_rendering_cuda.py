@@ -3,22 +3,23 @@
 import bpy
 bpy.context.scene.cycles.device = 'GPU'
 
-# Setting GPU for all scenes? not sure if smart
-# alternativly just main scne:
-# bpy.data.scenes["Scene"].cycles.device = 'GPU'
-for scene_name in bpy.data.scenes.keys():
-        bpy.data.scenes[scene_name].cycles.device = 'GPU'
+# Remove render type overwrite
+bpy.context.scene.render.use_overwrite = False
+bpy.context.scene.render.use_placeholder = True
 
-ver = bpy.app.version
-new_api = (ver[0] > 2) or (ver[0]==2 and ver[1] >= 78)
+blender_version = bpy.app.version
+uses_new_api = (blender_version[0] > 2) or (blender_version[0]==2 and blender_version[1] >= 78)
 
-if new_api:
-        # after blender 2.79:
-        bpy.context.user_preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'
-        number_of_devices = len(bpy.context.user_preferences.addons['cycles'].preferences.devices)
-        for i in range(0,number_of_devices):
-                bpy.context.user_preferences.addons['cycles'].preferences.devices[i].use = True
+if uses_new_api:
+    # after blender 2.79:
+    cycles_prefs = bpy.context.user_preferences.addons['cycles'].preferences
+    cycles_prefs.compute_device_type = 'CUDA'
+    for device in cycles_prefs.devices:
+        if(device.type == 'CUDA'):
+            device.use = True
+        else:
+            device.use = False
 else:
-        # before blender 2.79:
-        bpy.context.user_preferences.system.compute_device_type = 'CUDA'
-        bpy.context.user_preferences.system.compute_device = 'CUDA_MULTI'
+    # before blender 2.79:
+    bpy.context.user_preferences.system.compute_device_type = 'CUDA'
+    bpy.context.user_preferences.system.compute_device = 'CUDA_MULTI'
